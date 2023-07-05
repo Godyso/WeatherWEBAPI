@@ -5,7 +5,7 @@ import numpy as np
 
 API_KEY = "e6bec0163bf29d88088cb3d22b06bbae"
 
-@st.cache
+@st.cache_data
 def fetch_weather_data(city, unit):
     unit_code = 'metric' if unit == 'Celsius' else 'imperial'
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&units={unit_code}&appid={API_KEY}"
