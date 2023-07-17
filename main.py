@@ -1,6 +1,7 @@
 import requests
 import pandas as pd
 import streamlit as st
+import altair as alt
 import numpy as np
 
 API_KEY = "e6bec0163bf29d88088cb3d22b06bbae"
@@ -43,36 +44,53 @@ with st.form(key="my_form"):
             # Success Box
             st.success("Weather data fetched successfully!")
             # Info Box
-            st.info(f"This is the weather information for {str.title(city)}.")
+            #st.info(f"This is the weather information for {str.title(city)}.")
 
-            st.header("Weather Data")
-
+            st.header(str.title(city))
+            temperature_data = {
+                "Temperature": ["Temperature", "Feals Like", "Min", "Max"],
+                "Degrees" : [data['main']['temp'],
+                data['main']['feels_like'],
+                data['main']['temp_min'],
+                data['main']['temp_max']],
+            }
             weather_data = {
-                "Temperature": data['main']['temp'],
-                "Feels Like": data['main']['feels_like'],
-                "Temperature Min": data['main']['temp_min'],
-                "Temperature Max": data['main']['temp_max'],
                 "Pressure": data['main']['pressure'],
                 "Humidity": data['main']['humidity'],
                 "Wind Speed": data['wind']['speed'],
                 "General": general
             }
-            df = pd.DataFrame(weather_data, index=[0])
+            df_other = pd.DataFrame(weather_data, index=[0])
+            df_temperature = pd.DataFrame(temperature_data)
 
+            col1, col2 = st.columns(2)
+            with col1:
+                # Display Weather Icon
+                st.image(icon, caption='Current Weather Icon')
+                st.subheader("Your Weather At A Glance")
+                st.info("Current temperature: " + str(df_temperature["Degrees"][0]))
+                st.info("Feels like: " + str(df_temperature["Degrees"][1]))
+                st.info("Humidity: " + str(df_other["Humidity"][0]))
+                st.info("Wind speed: " + str(df_other["Wind Speed"][0]))
+                #st.info("Feels like:", df_temperature)
 
-
-            # Display Weather Icon
-            st.image(icon, caption='Current Weather Icon')
+            with col2:
+                # Map
+                coordinates_df = pd.DataFrame({'lat': [data['coord']['lat']], 'lon': [data['coord']['lon']]})
+                st.map(coordinates_df)
 
             # Interactive Table
-            st.dataframe(df)
-
+            #st.dataframe(df_general)
+            st.subheader("Today's weather in charts")
+            #clr = st.color_picker("Pick a color", "#00f900")
             # Bar chart
-            st.bar_chart(df.drop(columns=['General']).T)  # Transpose the dataframe
-
-            # Map
-            coordinates_df = pd.DataFrame({'lat': [data['coord']['lat']], 'lon': [data['coord']['lon']]})
-            st.map(coordinates_df)
+            #st.bar_chart(df.drop(columns=['General']).T)  # Transpose the dataframe
+            bar_chart = alt.Chart(df_temperature).mark_bar().encode(
+                x = "Temperature",
+                y = "Degrees",
+                #color = alt.value(clr)
+            )
+            st.altair_chart(bar_chart, use_container_width=True)
 
             # Checkbox
             if st.checkbox('Show raw data'):
