@@ -3,12 +3,37 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 import numpy as np
+import json
 
 API_KEY = "e6bec0163bf29d88088cb3d22b06bbae"
-
+API_KEY2 = "01dc97681afde3b1c3d14dfc74df1b7f"
 
 @st.cache_data
-def fetch_weather_data(city, unit):
+def fetch_hourly_weather_data(city, unit):
+    try:
+
+
+        url = "https://weatherapi-com.p.rapidapi.com/current.json"
+
+        url = "https://weatherapi-com.p.rapidapi.com/forecast.json"
+
+        querystring = {"q": city , "days": "1"}
+
+        headers = {
+            "X-RapidAPI-Key": "3dd49efa65mshca76ca025d437f1p1e6586jsn4ad979d80758",
+            "X-RapidAPI-Host": "weatherapi-com.p.rapidapi.com"
+        }
+
+        response = requests.get(url, headers=headers, params=querystring)
+        hourly = response.json()
+        print(hourly)
+
+        st.write(hourly["forecast"])
+    except Exception:
+        st.write("Nope")
+
+@st.cache_data
+def fetch_current_weather_data(city, unit):
     try:
         unit_code = 'metric' if unit == 'Celsius' else 'imperial'
         url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&units={unit_code}&appid={API_KEY}"
@@ -27,7 +52,7 @@ def fetch_weather_data(city, unit):
 
 
 st.title("Weather App")
-
+fetch_hourly_weather_data("London", "imperial")
 # st.sidebar.header("Input Options")
 with st.form(key="my_form"):
     city = st.text_input("City name", "London") # find a way to detect states
@@ -37,7 +62,7 @@ with st.form(key="my_form"):
 
 
     if button:
-        data, general, icon = fetch_weather_data(city, unit)
+        data, general, icon = fetch_current_weather_data(city, unit)
         # if data['cod'] != 200:
         #    st.error("Failed to fetch the data. Please check if the city name is correct.")
         if data and general and icon is not None:
@@ -93,8 +118,8 @@ with st.form(key="my_form"):
             st.altair_chart(bar_chart, use_container_width=True)
 
             # Checkbox
-            if st.checkbox('Show raw data'):
-                st.write(df)
+            if st.checkbox('The Days Ahead'):
+                st.write("To be constructed")
 
             # Selectbox
             selected_feature = st.selectbox('Select feature', list(df.columns))
