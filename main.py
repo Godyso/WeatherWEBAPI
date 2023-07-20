@@ -60,6 +60,9 @@ with st.form(key="my_form"):
 
     button = st.form_submit_button("Fetch Weather Data")
 
+    # Color Picker
+    clr = st.color_picker('Chart Color Selector', '#00f900')
+
 
     if button:
         data, general, icon = fetch_current_weather_data(city, unit)
@@ -113,7 +116,7 @@ with st.form(key="my_form"):
             bar_chart = alt.Chart(df_temperature).mark_bar().encode(
                 x = "Temperature",
                 y = "Degrees",
-                #color = alt.value(clr)
+                color = alt.value(clr)
             )
             st.altair_chart(bar_chart, use_container_width=True)
 
@@ -122,16 +125,16 @@ with st.form(key="my_form"):
                 st.write("To be constructed")
 
             # Selectbox
-            selected_feature = st.selectbox('Select feature', list(df.columns))
+            #selected_feature = st.selectbox('Select feature', list(df.columns))
 
-            if selected_feature:
-                st.line_chart(df[selected_feature])
+            #if selected_feature:
+                #st.line_chart(df[selected_feature])
 
             # Multiselect
-            selected_features = st.multiselect('Select features', list(df.columns), default=list(df.columns))
+            #selected_features = st.multiselect('Select features', list(df.columns), default=list(df.columns))
 
-            if len(selected_features) > 0:
-                st.area_chart(df[selected_features])
+           # if len(selected_features) > 0:
+                #st.area_chart(df[selected_features])
 
             # Slider
             selected_temperature = st.slider('Select a range of temperature', 0, 100, (25, 75))
@@ -141,9 +144,6 @@ with st.form(key="my_form"):
 
             # File Uploader
             file = st.file_uploader("Upload an image of the city (optional)")
-
-            # Color Picker
-            color = st.color_picker("Pick a color", "#00f900")
 
             # Text-area
             comment = st.text_area("Leave a comment here", "")
