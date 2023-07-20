@@ -12,9 +12,6 @@ API_KEY2 = "01dc97681afde3b1c3d14dfc74df1b7f"
 def fetch_hourly_weather_data(city, unit):
     try:
 
-
-        url = "https://weatherapi-com.p.rapidapi.com/current.json"
-
         url = "https://weatherapi-com.p.rapidapi.com/forecast.json"
 
         querystring = {"q": city , "days": "1"}
@@ -26,11 +23,14 @@ def fetch_hourly_weather_data(city, unit):
 
         response = requests.get(url, headers=headers, params=querystring)
         hourly = response.json()
-        print(hourly)
+        print(hourly["forecast"]["forecastday"])
 
         st.write(hourly["forecast"])
     except Exception:
         st.write("Nope")
+        return None
+
+    return hourly
 
 @st.cache_data
 def fetch_current_weather_data(city, unit):
@@ -66,13 +66,10 @@ with st.form(key="my_form"):
 
     if button:
         data, general, icon = fetch_current_weather_data(city, unit)
-        # if data['cod'] != 200:
-        #    st.error("Failed to fetch the data. Please check if the city name is correct.")
-        if data and general and icon is not None:
+        hour_data = fetch_hourly_weather_data(city, unit)
+        if data and general and icon and hour_data is not None:
             # Success Box
             st.success("Weather data fetched successfully!")
-            # Info Box
-            #st.info(f"This is the weather information for {str.title(city)}.")
 
             st.header(str.title(city))
             temperature_data = {
@@ -88,6 +85,11 @@ with st.form(key="my_form"):
                 "Wind Speed": data['wind']['speed'],
                 "General": general
             }
+            hourly_data = {
+
+
+            }
+
             df_other = pd.DataFrame(weather_data, index=[0])
             df_temperature = pd.DataFrame(temperature_data)
 
