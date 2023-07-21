@@ -9,36 +9,46 @@ import json
 API_KEY = "e6bec0163bf29d88088cb3d22b06bbae"
 API_KEY2 = "01dc97681afde3b1c3d14dfc74df1b7f"
 
+
 @st.cache_data
 def fetch_hourly_weather_data(city, unit):
+    """
+    Retrieve today's weather conditions for each hour.
+    :param city: the user specified city
+    :param unit: the user specified unit of measurement
+    :return: the hourly weather, unit keu
+    """
     try:
 
         url = "https://weatherapi-com.p.rapidapi.com/forecast.json"
 
-        querystring = {"q": city , "days": "1"}
+        querystring = {"q": city, "days": "1"}
 
         headers = {
             "X-RapidAPI-Key": "3dd49efa65mshca76ca025d437f1p1e6586jsn4ad979d80758",
             "X-RapidAPI-Host": "weatherapi-com.p.rapidapi.com"
         }
-
         response = requests.get(url, headers=headers, params=querystring)
         all_data = response.json()
         hourly = all_data["forecast"]["forecastday"][0]["hour"]
-        #print(hourly)
 
-
-        #st.write(hourly)
     except Exception:
-        st.write("Nope")
-        return None
+        st.write("Failed to fetch the data. Please check if the city name is correct.")
+        return None, None, None
     if unit == "Celsius":
         return hourly, "temp_c"
     else:
         return hourly, "temp_f"
 
+
 @st.cache_data
 def fetch_current_weather_data(city, unit):
+    """
+    This method retrieves the current weather of a user specified location.
+    :param city: the user specified city
+    :param unit: the user specified unit of measurement
+    :return: current weather data, general weather data, weather icon
+    """
     try:
         unit_code = 'metric' if unit == 'Celsius' else 'imperial'
         url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&units={unit_code}&appid={API_KEY}"
@@ -56,12 +66,39 @@ def fetch_current_weather_data(city, unit):
     return weather_data, general, icon
 
 
+@st.cache_data
+def fetch_tomorrow_data(city, unit):
+    """
+    This method gets the forecast for tomorrow.
+    :param city: the user specified city
+    :param unit: the user specified unit of measurement
+    :return: tomorrow's weather data, max temp key, min temp key
+    """
+    try:
+        url = "https://weatherapi-com.p.rapidapi.com/forecast.json"
+        querystring = {"q": city, "days": "2"}
+        headers = {
+            "X-RapidAPI-Key": "3dd49efa65mshca76ca025d437f1p1e6586jsn4ad979d80758",
+            "X-RapidAPI-Host": "weatherapi-com.p.rapidapi.com"
+        }
+        response = requests.get(url, headers=headers, params=querystring)
+        all_data = response.json()
+
+        tom = all_data["forecast"]["forecastday"][1]
+    except Exception:
+        st.write("Failed to fetch the data. Please check if the city name is correct.")
+        return None, None, None
+    if unit == "Celsius":
+        return tom, "maxtemp_c", "mintemp_c"
+    else:
+        return tom, "maxtemp_f", "mintemp_f"
+
+
 st.title("Weather App")
 # Text box
 city = st.text_input("City name", "London")
 # Radio button
 unit = st.radio('Unit of temperature', ('Celsius', 'Fahrenheit'))
-
 
 # Display data to the user
 if city:
@@ -70,7 +107,7 @@ if city:
 
     # Get hourly forecast
     hour_data, unit_key = fetch_hourly_weather_data(city, unit)
-
+    tmr_data, tmr_max_temp_key, tmr_min_temp_key = fetch_tomorrow_data(city, unit)
     if data and general and icon and hour_data is not None:
         # Success Box
         st.success("Weather data fetched successfully!")
@@ -81,10 +118,10 @@ if city:
         # Current Temperature Data Frame
         temperature_data = {
             "Temperature": ["Temperature", "Feals Like", "Min", "Max"],
-            "Degrees" : [data['main']['temp'],
-            data['main']['feels_like'],
-            data['main']['temp_min'],
-            data['main']['temp_max']],
+            "Degrees": [data['main']['temp'],
+                        data['main']['feels_like'],
+                        data['main']['temp_min'],
+                        data['main']['temp_max']],
         }
 
         # Other Current Weather Data Frame
@@ -98,10 +135,10 @@ if city:
 
         # Hourly Temperature Data Frame
         hourly_data = {
-            "Hour" : ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00",
-                      "06:00", "07:00", "08:00", "09:00", "10:00", "11:00",
-                      "12:00", "13:00", "14:00", "15:00", "16:00", "17:00",
-                      "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"],
+            "Hour": ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00",
+                     "06:00", "07:00", "08:00", "09:00", "10:00", "11:00",
+                     "12:00", "13:00", "14:00", "15:00", "16:00", "17:00",
+                     "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"],
             "Degrees": [hour_data[0][unit_key], hour_data[1][unit_key],
                         hour_data[2][unit_key], hour_data[3][unit_key],
                         hour_data[4][unit_key], hour_data[5][unit_key],
@@ -116,6 +153,13 @@ if city:
                         hour_data[22][unit_key], hour_data[23][unit_key]]
         }
 
+        # Tomorrow's Forecast Data Frame
+        tomorrow_data = {
+            "Weather": ["Date", "Weather", "Max Temp", "Min Temp", "Humidity"],
+            "Values": [tmr_data["date"], tmr_data["day"]["condition"]["text"],
+                       tmr_data["day"][tmr_max_temp_key], tmr_data["day"][tmr_min_temp_key],
+                       tmr_data["day"]["avghumidity"]]
+        }
         # Create data frames
         df_other = pd.DataFrame(weather_data, index=[0])
         df_temperature = pd.DataFrame(temperature_data)
@@ -132,19 +176,22 @@ if city:
             st.info("Feels like: " + str(df_temperature["Degrees"][1]))
             st.info("Humidity: " + str(df_other["Humidity"][0]))
             st.info("Wind speed: " + str(df_other["Wind Speed"][0]))
-
+            st.info("Pressure: " + str(df_other["Pressure"][0]))
 
         with col2:
+            st.subheader("")  # lower button's position
+            st.subheader("")  # lower button's position
+            st.subheader("")  # lower button's position
             # Button
             button = st.button("Show me a map")
             if button:
                 # Map
                 coordinates_df = pd.DataFrame({'lat': [data['coord']['lat']], 'lon': [data['coord']['lon']]})
                 st.map(coordinates_df)
-            st.info("Pressure: " + str(df_other["Pressure"][0]))
+
 
         # Checkbox
-        cbox = st.checkbox("Show me the weather in more detail")
+        cbox = st.checkbox("Show Me Today's Weather In More Detail")
         if cbox:
             # Selectbox
             options = st.selectbox("Select Charts",
@@ -152,17 +199,16 @@ if city:
                                     "3: Both"))
             # Color Picker
             clr = st.color_picker('Chart Color Selector', '#00f900')
-        # Interactive Table
-        #st.dataframe(df_general)
+
         if cbox:
             st.subheader("Today's Weather In Charts")
 
             # Bar chart
             if options[0] == "1" or options[0] == "3":
                 bar_chart = alt.Chart(df_temperature).mark_bar().encode(
-                    x = "Temperature",
-                    y = "Degrees",
-                    color = alt.value(clr)
+                    x="Temperature",
+                    y="Degrees",
+                    color=alt.value(clr)
                 )
                 st.altair_chart(bar_chart, use_container_width=True)
 
@@ -170,13 +216,14 @@ if city:
             if options[0] == "2" or options[0] == "3":
                 st.subheader("Weather By The Hour")
                 fig = px.line(df_hour,
-                                  x=df_hour["Hour"],
-                                  y=df_hour["Degrees"]
-                                  )
+                              x=df_hour["Hour"],
+                              y=df_hour["Degrees"]
+                              )
                 fig.update_traces(line_color=clr)
                 st.plotly_chart(fig, use_container_width=True)
-            sl = st.slider("Show tables", 0,1)
-            col1, col2 = st.columns(2)
-            with col1:
-                if sl == 1:
-                    st.dataframe(temperature_data, use_container_width=True)
+
+        # Slider
+        sl = st.slider("Show Tomorrow's Forecast", 0, 1)
+        if sl == 1:
+            st.subheader("Tomorrow's Expected Conditions")
+            st.dataframe(tomorrow_data, use_container_width=True)
