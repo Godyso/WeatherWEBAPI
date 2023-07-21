@@ -94,11 +94,11 @@ def fetch_tomorrow_data(city, unit):
         return tom, "maxtemp_f", "mintemp_f"
 
 
-st.title("Weather App")
+st.title("Major City Forecast")
 # Text box
-city = st.text_input("City name", "London")
+city = st.text_input("Enter a city name", "London")
 # Radio button
-unit = st.radio('Unit of temperature', ('Celsius', 'Fahrenheit'))
+unit = st.radio('Select your unit of temperature', ('Celsius', 'Fahrenheit'))
 
 # Display data to the user
 if city:
@@ -164,7 +164,7 @@ if city:
         df_other = pd.DataFrame(weather_data, index=[0])
         df_temperature = pd.DataFrame(temperature_data)
         df_hour = pd.DataFrame(hourly_data)
-
+        df_tomorrow = pd.DataFrame(tomorrow_data)
         col1, col2 = st.columns(2)
         with col1:
             st.subheader("Your Weather At A Glance")
@@ -226,4 +226,4 @@ if city:
         sl = st.slider("Show Tomorrow's Forecast", 0, 1)
         if sl == 1:
             st.subheader("Tomorrow's Expected Conditions")
-            st.dataframe(tomorrow_data, use_container_width=True)
+            st.dataframe(df_tomorrow, use_container_width=True)
